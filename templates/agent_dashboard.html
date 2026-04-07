@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Agent Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/socketio.js"></script>
+    <script src="/static/js/agent.js" defer></script>
+</head>
+<body class="agent-page">
+    <div class="app">
+        <!-- Navigation Bar -->
+        <nav>
+            <div class="logo">Emotion Dashboard</div>
+            <ul>
+                <li><a href="/agent">Dashboard</a></li>
+                <li><a href="/analytics">Analytics</a></li>
+                <li><a href="#">Calls</a></li>
+                <li><a href="#">Settings</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">🌓</button>
+        </nav>
+
+        <!-- Main Content – now full width (no sidebar) -->
+        <main class="agent-main" style="margin-left: 0; padding: 20px;">
+            <h1>Agent Dashboard</h1>
+            <div class="agent-info card">
+                <p>Welcome, <strong>{{ agent_name }}</strong> ({{ session['email'] }})</p>
+            </div>
+
+            <!-- Call Setup -->
+            <div class="call-setup card" id="callSetup">
+                <h3>Start a New Call</h3>
+                <input type="text" id="customerName" placeholder="Customer Name / Call ID" required>
+                <button id="startCallBtn">Start Call</button>
+            </div>
+
+            <!-- Live Call Panel (initially hidden) -->
+            <div class="live-call-panel card" id="liveCallPanel" style="display: none;">
+                <div class="call-header">
+                    <span class="caller-id" id="customerDisplay">Customer: </span>
+                    <span class="call-duration" id="callDuration">00:00</span>
+                    <span class="emotion-badge" id="currentEmotion">Neutral</span>
+                </div>
+                <div class="emotion-gauge">
+                    <canvas id="gaugeChart" width="200" height="100"></canvas>
+                </div>
+                <div class="emotion-timeline">
+                    <canvas id="timelineChart" width="400" height="100"></canvas>
+                </div>
+                <div class="suggested-responses card">
+                    <h3>Suggested Responses</h3>
+                    <p id="suggestion">Remain calm and empathize with the customer.</p>
+                </div>
+                <div class="self-feedback card">
+                    <h3>Your Tone</h3>
+                    <p id="selfTone">You sound rushed.</p>
+                </div>
+                <div class="call-controls">
+                    <button id="muteBtn">Mute</button>
+                    <button id="holdBtn">Hold</button>
+                    <button id="endBtn">End Call</button>
+                </div>
+            </div>
+
+            <!-- After‑Call Summary (hidden initially) -->
+            <div class="after-call-summary card" style="display: none;" id="afterCallSummary">
+                <h2>After‑Call Summary</h2>
+                <p>Agent: <span id="agentName">{{ agent_name }}</span></p>
+                <p>Customer: <span id="summaryCustomerName"></span></p>
+                <p>Duration: <span id="summaryDuration"></span></p>
+                <p>Overall Sentiment: <span id="overallSentiment"></span></p>
+                <p>Emotion Peaks: <span id="emotionPeaks"></span></p>
+                <button id="generateReportBtn">Generate Report</button>
+            </div>
+
+            <div class="notification-panel" id="notificationPanel" style="display: none;"></div>
+        </main>
+    </div>
+    <script>
+        const emotionLabels = {{ emotion_labels|tojson }};
+        const agentName = "{{ agent_name }}";
+    </script>
+</body>
+</html>

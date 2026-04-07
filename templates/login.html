@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In • Emotion Dashboard</title>
+    <!-- Your existing main stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Font Awesome 6 (icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ---------- Login-specific refinements ---------- */
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #eef2ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+            margin: 0;
+        }
+
+        /* Use the existing .card class for the login container */
+        .login-container.card {
+            width: 100%;
+            max-width: 460px;
+            margin: 0 auto;
+            padding: 2rem 2rem 2.2rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .login-container.card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Input groups: only left icon, no right button */
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.85rem 1rem 0.85rem 2.5rem;  /* space only for left icon */
+            font-size: 0.95rem;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .input-group input:focus + .input-icon {
+            color: var(--accent);
+        }
+
+        /* Form options row */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0.5rem 0 1.8rem;
+            font-size: 0.85rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .checkbox-label input {
+            width: 1rem;
+            height: 1rem;
+            accent-color: var(--accent);
+            margin: 0;
+        }
+
+        /* Login button with loading state */
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(105deg, var(--accent), var(--accent-dark));
+            border: none;
+            padding: 0.85rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 1.2rem;
+            height: 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error message */
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            color: #ef4444;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 1.8rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .register-link a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Floating dark mode toggle – consistent with dashboard */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 3rem;
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            body { padding: 1rem; }
+            .login-container.card { padding: 1.5rem; }
+            .form-options { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .input-group input { padding: 0.75rem 1rem 0.75rem 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container card">
+        <div class="login-header">
+            <span class="logo">🧠 Emotion Dashboard</span>
+            <p>Welcome back — sign in to continue</p>
+        </div>
+
+        <!-- Error container (dynamic) -->
+        <div id="errorContainer" style="display: none;" class="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <form id="loginForm" method="post" action="/login">
+            <!-- Email field -->
+            <div class="input-group">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" name="email" id="email" placeholder="Email address" required autocomplete="email">
+            </div>
+
+            <!-- Password field (no eye toggle) -->
+            <div class="input-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" name="password" id="password" placeholder="Password" required autocomplete="current-password">
+            </div>
+
+            <div class="form-options">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="remember" id="remember">
+                    <span>Remember me</span>
+                </label>
+                <!-- Forgot password link removed -->
+            </div>
+
+            <button type="submit" id="loginBtn" class="login-btn">
+                <span>Sign In</span>
+            </button>
+        </form>
+
+        <div class="register-link">
+            Don't have an account? <a href="/register">Create account</a>
+        </div>
+    </div>
+
+    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <script>
+        // ==================== DARK MODE ====================
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        let isDark = localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && prefersDark);
+
+        function applyDarkMode(enable) {
+            if (enable) {
+                document.body.classList.add('dark-theme');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                document.body.classList.remove('dark-theme');
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            localStorage.setItem('theme', enable ? 'dark' : 'light');
+        }
+
+        applyDarkMode(isDark);
+        darkModeToggle.addEventListener('click', () => {
+            isDark = !isDark;
+            applyDarkMode(isDark);
+        });
+
+        // ==================== FORM SUBMISSION ====================
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorContainer = document.getElementById('errorContainer');
+        const errorTextSpan = document.getElementById('errorText');
+
+        function showError(message) {
+            errorTextSpan.textContent = message;
+            errorContainer.style.display = 'flex';
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideError() {
+            errorContainer.style.display = 'none';
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/.test(email);
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!email) return showError('Email address is required.');
+            if (!isValidEmail(email)) return showError('Please enter a valid email address.');
+            if (!password) return showError('Password cannot be empty.');
+
+            const originalHTML = loginBtn.innerHTML;
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('password', password);
+            if (document.getElementById('remember').checked) formData.append('remember', 'on');
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok && (data.success || data.redirect)) {
+                    window.location.href = data.redirect || '/dashboard';
+                } else {
+                    showError(data.error || 'Invalid email or password.');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalHTML;
+                }
+            } catch {
+                // Fallback to traditional submit
+                loginForm.submit();
+            }
+        });
+
+        // Capture any server-side error rendered in the original template
+        window.addEventListener('DOMContentLoaded', () => {
+            const legacyError = document.querySelector('.error');
+            if (legacyError && legacyError.textContent.trim()) {
+                showError(legacyError.textContent.trim());
+                legacyError.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

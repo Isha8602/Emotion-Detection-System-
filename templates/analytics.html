@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analytics | Emotion Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ========== FULL‑WIDTH PROFESSIONAL LAYOUT ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        nav {
+            flex-shrink: 0;
+        }
+
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .charts-container {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-box {
+            flex: 1;
+            min-width: 400px;
+            background: var(--bg-secondary);
+            border-radius: 1.5rem;
+            padding: 1.8rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s;
+        }
+
+        .chart-box:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        .chart-box h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent);
+            padding-left: 1rem;
+        }
+
+        canvas {
+            max-height: 400px !important;
+            width: 100% !important;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 1.5rem;
+            padding: 1.8rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent);
+            padding-left: 1rem;
+        }
+
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 260px;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-size-select {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1rem;
+            min-width: 700px;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem 0.9rem;
+            background-color: var(--bg-primary);
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        th:hover {
+            background-color: var(--border);
+        }
+
+        th::after {
+            content: '↕';
+            position: absolute;
+            right: 15px;
+            opacity: 0.5;
+            font-size: 0.9rem;
+        }
+
+        th.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+
+        th.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+
+        td {
+            padding: 0.9rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background-color: var(--bg-primary);
+        }
+
+        .loading, .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .chart-box {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 1rem;
+            }
+            th, td {
+                padding: 0.7rem;
+                font-size: 0.9rem;
+            }
+            .table-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box {
+                width: 100%;
+            }
+            .pagination {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <nav>
+            <div class="logo">Emotion Dashboard</div>
+            <ul>
+                <li><a href="/agent">Dashboard</a></li>
+                <li><a href="/analytics" class="active">Analytics</a></li>
+                <li><a href="#">Calls</a></li>
+                <li><a href="#">Settings</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">🌓</button>
+        </nav>
+
+        <main>
+            <div class="analytics-main">
+                <h1>Call Analytics</h1>
+
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h2>Overall Sentiment Distribution</h2>
+                        <canvas id="emotionPie"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <h2>Detailed Emotion Counts</h2>
+                        <canvas id="emotionBar"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Call History</h2>
+                    <div class="table-toolbar">
+                        <input type="text" id="searchInput" class="search-box" placeholder="Search by agent, customer, sentiment, peaks...">
+                        <div class="pagination">
+                            <button id="prevPageBtn" disabled>‹ Prev</button>
+                            <span id="pageInfo">Page 1 of 1</span>
+                            <button id="nextPageBtn" disabled>Next ›</button>
+                            <select id="pageSizeSelect" class="page-size-select">
+                                <option value="10">10 per page</option>
+                                <option value="25" selected>25 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="callsTable">
+                            <thead>
+                                <tr>
+                                    <th data-sort="date">Date</th>
+                                    <th data-sort="agent">Agent</th>
+                                    <th data-sort="customer">Customer</th>
+                                    <th data-sort="duration">Duration</th>
+                                    <th data-sort="sentiment">Overall Sentiment</th>
+                                    <th data-sort="peaks">Emotion Peaks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" class="loading">Loading data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const emotionLabels = ['neutral', 'calm', 'happy', 'sad', 'angry', 'fearful', 'disgust', 'surprised'];
+
+        let allReports = [];
+        let filteredReports = [];
+        let currentPage = 1;
+        let pageSize = 25;
+        let sortColumn = 'date';
+        let sortDirection = 'desc';
+        let lastReportCount = 0;
+
+        const tbody = document.querySelector('#callsTable tbody');
+        const searchInput = document.getElementById('searchInput');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const pageInfoSpan = document.getElementById('pageInfo');
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+        function fetchReports() {
+            fetch('/api/reports')
+                .then(res => {
+                    if (res.status === 401) window.location.href = '/login';
+                    if (!res.ok) throw new Error('Server error');
+                    return res.json();
+                })
+                .then(data => {
+                    const changed = data.length !== lastReportCount ||
+                        (data.length > 0 && allReports.length > 0 && data[0].id !== allReports[0].id);
+                    if (changed) {
+                        allReports = data;
+                        filteredReports = [...allReports];
+                        lastReportCount = data.length;
+                        updateTableAndCharts();
+                        console.log('Data updated:', data.length, 'reports');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Error loading data. Please refresh or log in again.</td></tr>';
+                });
+        }
+
+        function updateTableAndCharts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                filteredReports = allReports.filter(call =>
+                    call.agent_name.toLowerCase().includes(searchTerm) ||
+                    call.customer_name.toLowerCase().includes(searchTerm) ||
+                    call.overall_sentiment.toLowerCase().includes(searchTerm) ||
+                    call.emotion_peaks.toLowerCase().includes(searchTerm)
+                );
+            } else {
+                filteredReports = [...allReports];
+            }
+
+            filteredReports.sort((a, b) => {
+                let valA, valB;
+                switch (sortColumn) {
+                    case 'date':
+                        valA = new Date(a.start_time);
+                        valB = new Date(b.start_time);
+                        break;
+                    case 'agent':
+                        valA = a.agent_name;
+                        valB = b.agent_name;
+                        break;
+                    case 'customer':
+                        valA = a.customer_name;
+                        valB = b.customer_name;
+                        break;
+                    case 'duration':
+                        valA = a.duration;
+                        valB = b.duration;
+                        break;
+                    case 'sentiment':
+                        valA = a.overall_sentiment;
+                        valB = b.overall_sentiment;
+                        break;
+                    case 'peaks':
+                        valA = a.emotion_peaks;
+                        valB = b.emotion_peaks;
+                        break;
+                    default: return 0;
+                }
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            const totalPages = Math.ceil(filteredReports.length / pageSize);
+            currentPage = Math.min(currentPage, totalPages) || 1;
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageReports = filteredReports.slice(start, end);
+
+            renderTable(pageReports);
+            updatePaginationControls(totalPages);
+            updateCharts();
+        }
+
+        function renderTable(reports) {
+            if (!reports.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No calls match your search.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '';
+            reports.forEach(call => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = new Date(call.start_time).toLocaleDateString();
+                row.insertCell(1).innerText = call.agent_name;
+                row.insertCell(2).innerText = call.customer_name;
+                row.insertCell(3).innerText = formatDuration(call.duration);
+                row.insertCell(4).innerText = call.overall_sentiment;
+                row.insertCell(5).innerText = call.emotion_peaks;
+            });
+        }
+
+        function updatePaginationControls(totalPages) {
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages;
+            pageInfoSpan.innerText = `Page ${currentPage} of ${totalPages || 1}`;
+        }
+
+        function updateCharts() {
+            const emotionCounts = {};
+            const sentimentCounts = {};
+            allReports.forEach(call => {
+                sentimentCounts[call.overall_sentiment] = (sentimentCounts[call.overall_sentiment] || 0) + 1;
+                if (call.emotion_events) {
+                    try {
+                        const events = JSON.parse(call.emotion_events);
+                        events.forEach(ev => emotionCounts[ev.emotion] = (emotionCounts[ev.emotion] || 0) + 1);
+                    } catch(e) {}
+                }
+            });
+
+            const pieCtx = document.getElementById('emotionPie').getContext('2d');
+            if (window.pieChart) window.pieChart.destroy();
+            window.pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(sentimentCounts),
+                    datasets: [{
+                        data: Object.values(sentimentCounts),
+                        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#cc65cf', '#9966ff', '#ff9f40', '#4bc0c0', '#c9cbcf']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            const barCtx = document.getElementById('emotionBar').getContext('2d');
+            if (window.barChart) window.barChart.destroy();
+            window.barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: emotionLabels,
+                    datasets: [{
+                        label: 'Number of occurrences',
+                        data: emotionLabels.map(em => emotionCounts[em] || 0),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 8,
+                        barPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Count' } },
+                        x: { title: { display: true, text: 'Emotion' } }
+                    }
+                }
+            });
+        }
+
+        function formatDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+        }
+
+        function setupEventListeners() {
+            searchInput.addEventListener('input', () => { currentPage = 1; updateTableAndCharts(); });
+            prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; updateTableAndCharts(); } });
+            nextPageBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredReports.length / pageSize);
+                if (currentPage < totalPages) { currentPage++; updateTableAndCharts(); }
+            });
+            pageSizeSelect.addEventListener('change', (e) => { pageSize = parseInt(e.target.value); currentPage = 1; updateTableAndCharts(); });
+
+            document.querySelectorAll('#callsTable th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.getAttribute('data-sort');
+                    if (sortColumn === column) sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    else { sortColumn = column; sortDirection = 'desc'; }
+                    document.querySelectorAll('#callsTable th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+                    th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                    updateTableAndCharts();
+                });
+            });
+        }
+
+        // Initial load
+        fetchReports();
+        setupEventListeners();
+
+        // Poll every 30 seconds for new data (no refresh button needed)
+        setInterval(fetchReports, 30000);
+
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) themeToggle.addEventListener('click', () => document.body.classList.toggle('dark-mode'));
+    </script>
+</body>
+</html>
